@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Luxury Whisky Store</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+
+body{
+background:linear-gradient(180deg,#0a0a0f,#111);
+color:white;
+}
+
+/* NAV */
+nav{
+position:fixed;
+top:0;
+width:100%;
+display:flex;
+justify-content:space-between;
+padding:15px 40px;
+background:rgba(0,0,0,0.6);
+}
+nav h2{color:#ffd700;}
+
+/* HERO TANPA FOTO */
+.hero{
+height:60vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:none;
+}
+
+.hero h1{
+font-size:60px;
+background:linear-gradient(90deg,#ffd700,#fff3b0,#ffd700);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+/* PRODUCTS */
+.products{
+padding:100px 40px;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:30px;
+}
+
+.card{
+background:rgba(255,255,255,0.05);
+padding:20px;
+border-radius:15px;
+text-align:center;
+}
+
+.card img{
+width:150px;height:220px;object-fit:contain;
+}
+
+.price{color:#ffd700;margin:5px;}
+
+button{
+margin:3px;
+padding:7px 15px;
+border:none;
+border-radius:20px;
+background:linear-gradient(45deg,#ffd700,#ffae00);
+cursor:pointer;
+}
+
+/* CART BUTTON */
+.cart-btn{
+background:#222;
+color:#ffd700;
+}
+
+/* QTY */
+.qty-box{
+display:flex;
+justify-content:center;
+gap:8px;
+margin-top:5px;
+}
+
+.qty-btn{
+width:28px;height:28px;
+border-radius:50%;
+background:#333;
+color:#ffd700;
+border:none;
+cursor:pointer;
+}
+
+/* CHECKOUT */
+.checkout{
+position:fixed;
+bottom:20px;
+right:20px;
+background:#25D366;
+padding:12px 18px;
+border-radius:40px;
+display:flex;
+gap:10px;
+cursor:pointer;
+}
+
+.badge{
+background:red;
+border-radius:50%;
+padding:3px 7px;
+}
+
+/* ANIMASI */
+.fly{
+position:fixed;
+transition:0.8s;
+}
+
+</style>
+</head>
+
+<body>
+
+<nav><h2>Luxury Whisky</h2></nav>
+
+<section class="hero">
+<h1>Luxury Whisky</h1>
+</section>
+
+<section class="products" id="produk"></section>
+
+<div class="checkout" onclick="checkoutWA()">
+🛒 <span id="jumlah" class="badge">0</span> Rp 0
+</div>
+
+<script>
+
+let dataProduk = [
+["Jameson",270000],
+["Singleton",300000],
+["Jim Beam",250000],
+["Red Label",260000],
+["Martell VSOP",300000],
+["Glenfiddich",270000],
+["Chivas",280000],
+["Chivas 18",330000],
+["Jack Daniel",270000],
+["Jim Beam Apple",265000],
+["Black Label",270000],
+["Captain Morgan",240000],
+["Jose Cuervo",265000]
+];
+
+let cart = JSON.parse(localStorage.getItem("cart")) || {};
+let harga = {};
+let container = document.getElementById("produk");
+
+/* GENERATE PRODUK */
+dataProduk.forEach(p=>{
+harga[p[0]] = p[1];
+
+container.innerHTML += `
+<div class="card">
+<img src="${p[0]}.jpeg">
+<h2>${p[0]}</h2>
+<p class="price">Rp ${p[1].toLocaleString()}</p>
+
+<button onclick="orderWA('${p[0]}')">Order</button>
+<button class="cart-btn" onclick="tambah('${p[0]}')">
+<i class="fa fa-cart-shopping"></i>
+</button>
+
+<div class="qty-box">
+<button class="qty-btn" onclick="kurang('${p[0]}')">-</button>
+<span id="qty-${p[0]}">0</span>
+<button class="qty-btn" onclick="tambah('${p[0]}')">+</button>
+</div>
+
+</div>`;
+});
+
+/* SIMPAN */
+function simpan(){
+localStorage.setItem("cart", JSON.stringify(cart));
+}
+
+/* TAMBAH */
+function tambah(n){
+if(!cart[n]) cart[n]=0;
+cart[n]++;
+animasi();
+update();
+}
+
+/* KURANG (FIX BUG DI SINI) */
+function kurang(n){
+if(cart[n]){
+cart[n]--;
+
+if(cart[n] <= 0){
+delete cart[n];
+let el=document.getElementById("qty-"+n);
+if(el) el.innerText = 0; // 🔥 FIX: tampilkan 0
+}else{
+let el=document.getElementById("qty-"+n);
+if(el) el.innerText = cart[n];
+}
+}
+
+update();
+}
+
+/* UPDATE (FIX TOTAL & UI) */
+function update(){
+let total=0, totalHarga=0;
+
+for(let i in cart){
+total += cart[i];
+totalHarga += cart[i]*harga[i];
+}
+
+/* UPDATE SEMUA QTY */
+dataProduk.forEach(p=>{
+let nama = p[0];
+let el = document.getElementById("qty-"+nama);
+if(el){
+el.innerText = cart[nama] ? cart[nama] : 0;
+}
+});
+
+/* UPDATE CHECKOUT */
+let checkout = document.querySelector(".checkout");
+checkout.innerHTML = `🛒 <span class="badge">${total}</span> Rp ${totalHarga.toLocaleString()}`;
+
+simpan();
+}
+
+/* ANIMASI */
+function animasi(){
+let el=document.createElement("div");
+el.innerHTML="🛒";
+el.className="fly";
+el.style.left="50%";
+el.style.top="50%";
+
+document.body.appendChild(el);
+
+setTimeout(()=>{
+el.style.left="90%";
+el.style.top="90%";
+el.style.opacity=0;
+},50);
+
+setTimeout(()=>el.remove(),800);
+}
+
+/* WA */
+function orderWA(n){
+window.open("https://wa.me/6287756808208?text=Halo saya ingin order "+n);
+}
+
+function checkoutWA(){
+let pesan="Halo saya ingin order:%0A";
+let total=0;
+
+for(let i in cart){
+pesan+=`- ${i} (${cart[i]}x)%0A`;
+total+=cart[i]*harga[i];
+}
+
+pesan+=`%0ATotal: Rp ${total.toLocaleString()}`;
+window.open("https://wa.me/6287756808208?text="+pesan);
+}
+
+/* LOAD AWAL */
+update();
+
+</script>
+
+</body>
+</html>
